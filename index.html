@@ -162,13 +162,13 @@
   <canvas id="c" width="600" height="520"></canvas>
 
   <div id="overlay">
-    <h1>⚽ SOCCER KICK</h1>
+    <h1>⚽ ボール蹴り返し</h1>
     <div class="subtitle">
       前方から飛んでくるボールを<br>
       足で蹴り返せ！
     </div>
     <div class="key-hint">← → カーソルキー または 画面下ボタンで移動</div>
-    <button id="start-btn" onclick="startGame()">KICK OFF !</button>
+    <button id="start-btn" onclick="startGame()">キックオフ！</button>
   </div>
 </div>
 
@@ -504,10 +504,10 @@ function gameOver() {
   running = false;
   const ov = document.getElementById('overlay');
   ov.innerHTML = `
-    <div id="gameover-title">💥 GAME OVER</div>
+    <div id="gameover-title">💥 ゲームオーバー</div>
     <div class="stat" style="font-size:1.1rem">最終スコア <span style="font-size:2.2rem">${score}</span></div>
     <div class="stat" style="font-size:1rem">到達レベル <span>${level}</span></div>
-    <button id="start-btn" onclick="startGame()" style="margin-top:10px">もう一度 PLAY</button>
+    <button id="start-btn" onclick="startGame()" style="margin-top:10px">もう一度プレイ</button>
   `;
   ov.style.display = 'flex';
 }
