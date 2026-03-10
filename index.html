@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ ボール蹴り返しゲーム</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a1a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Noto Sans JP', sans-serif;
+    overflow: hidden;
+  }
+
+  #ui {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+
+  .stat {
+    color: #e8f5e9;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px #4caf50;
+  }
+
+  .stat span {
+    color: #76ff03;
+    font-size: 1.8rem;
+  }
+
+  #game-wrapper {
+    position: relative;
+  }
+
+  canvas {
+    display: block;
+    border: 3px solid #2e7d32;
+    border-radius: 4px;
+    box-shadow: 0 0 40px #1b5e20, inset 0 0 80px rgba(0,0,0,0.4);
+  }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,10,0,0.88);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    gap: 16px;
+    z-index: 10;
+  }
+
+  #overlay h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 3.5rem;
+    color: #76ff03;
+    text-shadow: 0 0 20px #76ff03, 0 0 40px #4caf50;
+    letter-spacing: 4px;
+  }
+
+  #overlay .subtitle {
+    color: #a5d6a7;
+    font-size: 1.05rem;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  #overlay .key-hint {
+    color: #69f0ae;
+    font-size: 0.95rem;
+    background: rgba(76,175,80,0.15);
+    padding: 8px 20px;
+    border: 1px solid #2e7d32;
+    border-radius: 4px;
+  }
+
+  #start-btn {
+    margin-top: 10px;
+    padding: 14px 48px;
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+    color: #e8f5e9;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 0 20px #1b5e20;
+    transition: all 0.2s;
+  }
+
+  #start-btn:hover {
+    background: linear-gradient(135deg, #388e3c, #66bb6a);
+    box-shadow: 0 0 30px #4caf50;
+    transform: scale(1.04);
+  }
+
+  #gameover-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 3rem;
+    color: #ff5252;
+    text-shadow: 0 0 20px #ff1744;
+    letter-spacing: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div class="stat">スコア <span id="score">0</span></div>
+  <div class="stat">レベル <span id="level">1</span></div>
+  <div class="stat">ミス <span id="miss">0</span> / 5</div>
+</div>
+
+<div id="game-wrapper">
+  <canvas id="c" width="600" height="520"></canvas>
+
+  <div id="overlay">
+    <h1>⚽ SOCCER KICK</h1>
+    <div class="subtitle">
+      前方から飛んでくるボールを<br>
+      足で蹴り返せ！
+    </div>
+    <div class="key-hint">← → カーソルキーで左右移動</div>
+    <button id="start-btn" onclick="startGame()">KICK OFF !</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ── State ──────────────────────────────────────────────
+let player, balls, score, miss, level, frameCount, spawnInterval, running;
+let keys = {};
+
+// ── Init ───────────────────────────────────────────────
+function initGame() {
+  player = { x: W / 2, y: H - 60, w: 64, h: 36, speed: 6 };
+  balls = [];
+  score = 0; miss = 0; level = 1; frameCount = 0; spawnInterval = 90;
+  running = true;
+  updateHUD();
+}
+
+function startGame() {
+  document.getElementById('overlay').style.display = 'none';
+  initGame();
+  loop();
+}
+
+// ── Ball spawn ─────────────────────────────────────────
+function spawnBall() {
+  const x = 40 + Math.random() * (W - 80);
+  const targetX = player.x + (Math.random() - 0.5) * 120;
+  const speed = 2.2 + level * 0.3 + Math.random() * 1.2;
+  const dist = Math.hypot(targetX - x, H - 80);
+  balls.push({
+    x, y: 20,
+    vx: (targetX - x) / dist * speed,
+    vy: (H - 80 - 20) / dist * speed,
+    r: 13,
+    rot: 0,
+    kicked: false,
+    kickVx: 0, kickVy: 0,
+    kickAlpha: 1,
+    trail: []
+  });
+}
+
+// ── Kick effect particles ──────────────────────────────
+let particles = [];
+function burst(x, y) {
+  for (let i = 0; i < 14; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 2 + Math.random() * 4;
+    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 1, color: `hsl(${80+Math.random()*60},100%,60%)` });
+  }
+}
+
+// ── Main loop ──────────────────────────────────────────
+function loop() {
+  if (!running) return;
+  requestAnimationFrame(loop);
+  frameCount++;
+
+  // Input
+  if (keys['ArrowLeft'])  player.x = Math.max(player.w/2 + 4, player.x - player.speed);
+  if (keys['ArrowRight']) player.x = Math.min(W - player.w/2 - 4, player.x + player.speed);
+
+  // Spawn
+  if (frameCount % spawnInterval === 0) spawnBall();
+  if (frameCount % 400 === 0 && spawnInterval > 38) { spawnInterval -= 6; level++; updateHUD(); }
+
+  // Update balls
+  for (let i = balls.length - 1; i >= 0; i--) {
+    const b = balls[i];
+    if (b.kicked) {
+      b.x += b.kickVx; b.y += b.kickVy;
+      b.kickVy -= 0.18;
+      b.rot += b.kickVx * 0.08;
+      b.kickAlpha -= 0.022;
+      if (b.kickAlpha <= 0) { balls.splice(i, 1); continue; }
+    } else {
+      b.trail.push({ x: b.x, y: b.y });
+      if (b.trail.length > 8) b.trail.shift();
+      b.x += b.vx; b.y += b.vy;
+      b.rot += b.vx * 0.06;
+
+      // Hit player
+      const px = player.x, py = player.y;
+      const dx = b.x - px, dy = b.y - py;
+      if (Math.abs(dx) < player.w/2 + b.r && Math.abs(dy) < player.h/2 + b.r) {
+        score++;
+        burst(b.x, b.y);
+        b.kicked = true;
+        b.kickVx = dx * 0.18 + (Math.random()-0.5)*3;
+        b.kickVy = -6 - Math.random()*3;
+        updateHUD();
+        continue;
+      }
+
+      // Miss (passed player)
+      if (b.y > H + b.r) {
+        balls.splice(i, 1);
+        miss++;
+        updateHUD();
+        if (miss >= 5) { gameOver(); return; }
+        continue;
+      }
+    }
+  }
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.04;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  draw();
+}
+
+// ── Draw ───────────────────────────────────────────────
+function draw() {
+  // Field background
+  ctx.fillStyle = '#1a4a1a';
+  ctx.fillRect(0, 0, W, H);
+  drawField();
+
+  // Trails
+  balls.forEach(b => {
+    if (!b.kicked) {
+      b.trail.forEach((t, idx) => {
+        const a = (idx / b.trail.length) * 0.35;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, b.r * (idx/b.trail.length), 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,180,${a})`;
+        ctx.fill();
+      });
+    }
+  });
+
+  // Balls
+  balls.forEach(b => {
+    ctx.save();
+    ctx.globalAlpha = b.kicked ? b.kickAlpha : 1;
+    ctx.translate(b.x, b.y);
+    ctx.rotate(b.rot);
+    drawBall(0, 0, b.r);
+    ctx.restore();
+  });
+
+  // Particles
+  particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4 * p.life, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Player (feet / body)
+  drawPlayer();
+}
+
+function drawField() {
+  // Grass stripes
+  for (let i = 0; i < 6; i++) {
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.0)';
+    ctx.fillRect(i * (W/6), 0, W/6, H);
+  }
+  // Penalty area lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1.5;
+  // top area
+  ctx.strokeRect(W/2 - 110, 0, 220, 80);
+  // bottom area (player zone)
+  ctx.strokeRect(W/2 - 140, H - 100, 280, 100);
+  // Center circle
+  ctx.beginPath();
+  ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
+  ctx.stroke();
+  // Center line
+  ctx.beginPath();
+  ctx.moveTo(0, H/2); ctx.lineTo(W, H/2);
+  ctx.stroke();
+  // Halfway dot
+  ctx.beginPath();
+  ctx.arc(W/2, H/2, 4, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fill();
+
+  // Goal (top)
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(W/2 - 80, 0, 160, 18);
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.strokeRect(W/2 - 80, 0, 160, 18);
+
+  // Shadow under player zone
+  const grad = ctx.createLinearGradient(0, H-110, 0, H);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.35)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, H-110, W, 110);
+}
+
+function drawBall(x, y, r) {
+  // Ball body
+  const g = ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.05, x, y, r);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.4, '#e8e8e8');
+  g.addColorStop(1, '#aaaaaa');
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Pentagon patches (simplified)
+  ctx.fillStyle = '#222';
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 0.8;
+  const patches = [
+    [0, 0],
+    [0, -r*0.62],
+    [r*0.59, -r*0.19],
+    [r*0.36, r*0.5],
+    [-r*0.36, r*0.5],
+    [-r*0.59, -r*0.19],
+  ];
+  patches.forEach(([px, py]) => {
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 - Math.PI/2;
+      const sr = r * 0.28;
+      const nx = px + Math.cos(a)*sr, ny = py + Math.sin(a)*sr;
+      i === 0 ? ctx.moveTo(nx, ny) : ctx.lineTo(nx, ny);
+    }
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // Shine
+  ctx.beginPath();
+  ctx.arc(x - r*0.32, y - r*0.32, r*0.2, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fill();
+}
+
+function drawPlayer() {
+  const px = player.x, py = player.y;
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(px, py + 14, 34, 10, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fill();
+
+  // Body (jersey - red)
+  ctx.fillStyle = '#e53935';
+  ctx.beginPath();
+  ctx.roundRect(px - 14, py - 28, 28, 30, 4);
+  ctx.fill();
+  // Jersey number
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px Oswald, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('10', px, py - 12);
+
+  // Head
+  const hg = ctx.createRadialGradient(px - 3, py - 40, 2, px, py - 36, 14);
+  hg.addColorStop(0, '#ffcc80');
+  hg.addColorStop(1, '#ff8a65');
+  ctx.beginPath();
+  ctx.arc(px, py - 36, 13, 0, Math.PI*2);
+  ctx.fillStyle = hg;
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle = '#4e342e';
+  ctx.beginPath();
+  ctx.ellipse(px, py - 46, 13, 7, 0, Math.PI, 0);
+  ctx.fill();
+
+  // Shorts
+  ctx.fillStyle = '#1a237e';
+  ctx.beginPath();
+  ctx.roundRect(px - 14, py + 2, 13, 14, 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(px + 1, py + 2, 13, 14, 2);
+  ctx.fill();
+
+  // Legs / socks (white)
+  ctx.fillStyle = '#f5f5f5';
+  ctx.fillRect(px - 12, py + 16, 8, 16);
+  ctx.fillRect(px + 4, py + 16, 8, 16);
+
+  // Boots
+  ctx.fillStyle = '#212121';
+  ctx.beginPath();
+  ctx.roundRect(px - 14, py + 28, 12, 8, 3);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(px + 2, py + 28, 12, 8, 3);
+  ctx.fill();
+
+  // Kick leg animation hint (oscillate)
+  const kickOffset = Math.sin(frameCount * 0.15) * 4;
+  ctx.fillStyle = '#e53935';
+  ctx.fillRect(px + 4, py + 2, 8, 4);
+  ctx.fillStyle = '#f5f5f5';
+  ctx.fillRect(px + 4 + kickOffset, py + 16, 8, 16);
+  ctx.fillStyle = '#212121';
+  ctx.beginPath();
+  ctx.roundRect(px + 2 + kickOffset, py + 28, 12, 8, 3);
+  ctx.fill();
+}
+
+function updateHUD() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('level').textContent = level;
+  document.getElementById('miss').textContent = miss;
+}
+
+function gameOver() {
+  running = false;
+  const ov = document.getElementById('overlay');
+  ov.innerHTML = `
+    <div id="gameover-title">💥 GAME OVER</div>
+    <div class="stat" style="font-size:1.1rem">最終スコア <span style="font-size:2.2rem">${score}</span></div>
+    <div class="stat" style="font-size:1rem">到達レベル <span>${level}</span></div>
+    <button id="start-btn" onclick="startGame()" style="margin-top:10px">もう一度 PLAY</button>
+  `;
+  ov.style.display = 'flex';
+}
+
+// ── Keys ───────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (['ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.key] = false; });
+</script>
+</body>
+</html>
