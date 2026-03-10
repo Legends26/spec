@@ -1,154 +1,145 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚽ ボール蹴り返しゲーム</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Noto+Sans+JP:wght@400;700&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>⚽ ボール蹴り返しゲーム 3D</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #050d05;
+      overflow: hidden;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
 
-  body {
-    background: #0a1a0a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Noto Sans JP', sans-serif;
-    overflow: hidden;
-  }
+    #ui {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 40px;
+      z-index: 20;
+      align-items: center;
+      background: rgba(0,10,0,0.65);
+      padding: 8px 24px;
+      border-radius: 8px;
+      border: 1px solid rgba(46,125,50,0.5);
+    }
 
-  #ui {
-    display: flex;
-    gap: 40px;
-    margin-bottom: 12px;
-    align-items: center;
-  }
+    .stat {
+      color: #e8f5e9;
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px #4caf50;
+    }
 
-  .stat {
-    color: #e8f5e9;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.3rem;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px #4caf50;
-  }
+    .stat span {
+      color: #76ff03;
+      font-size: 1.7rem;
+    }
 
-  .stat span {
-    color: #76ff03;
-    font-size: 1.8rem;
-  }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,10,0,0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 30;
+    }
 
-  #game-wrapper {
-    position: relative;
-  }
+    #overlay h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 3.5rem;
+      color: #76ff03;
+      text-shadow: 0 0 20px #76ff03, 0 0 40px #4caf50;
+      letter-spacing: 4px;
+    }
 
-  canvas {
-    display: block;
-    border: 3px solid #2e7d32;
-    border-radius: 4px;
-    box-shadow: 0 0 40px #1b5e20, inset 0 0 80px rgba(0,0,0,0.4);
-  }
+    #overlay .subtitle {
+      color: #a5d6a7;
+      font-size: 1.05rem;
+      text-align: center;
+      line-height: 1.8;
+    }
 
-  #overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,10,0,0.88);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    gap: 16px;
-    z-index: 10;
-  }
+    #overlay .key-hint {
+      color: #69f0ae;
+      font-size: 0.95rem;
+      background: rgba(76,175,80,0.15);
+      padding: 8px 20px;
+      border: 1px solid #2e7d32;
+      border-radius: 4px;
+    }
 
-  #overlay h1 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 3.5rem;
-    color: #76ff03;
-    text-shadow: 0 0 20px #76ff03, 0 0 40px #4caf50;
-    letter-spacing: 4px;
-  }
+    #start-btn {
+      margin-top: 10px;
+      padding: 14px 48px;
+      background: linear-gradient(135deg, #2e7d32, #43a047);
+      color: #e8f5e9;
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 3px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 0 20px #1b5e20;
+      transition: all 0.2s;
+    }
 
-  #overlay .subtitle {
-    color: #a5d6a7;
-    font-size: 1.05rem;
-    text-align: center;
-    line-height: 1.8;
-  }
+    #start-btn:hover {
+      background: linear-gradient(135deg, #388e3c, #66bb6a);
+      box-shadow: 0 0 30px #4caf50;
+      transform: scale(1.04);
+    }
 
-  #overlay .key-hint {
-    color: #69f0ae;
-    font-size: 0.95rem;
-    background: rgba(76,175,80,0.15);
-    padding: 8px 20px;
-    border: 1px solid #2e7d32;
-    border-radius: 4px;
-  }
+    #gameover-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 3rem;
+      color: #ff5252;
+      text-shadow: 0 0 20px #ff1744;
+      letter-spacing: 4px;
+    }
 
-  #start-btn {
-    margin-top: 10px;
-    padding: 14px 48px;
-    background: linear-gradient(135deg, #2e7d32, #43a047);
-    color: #e8f5e9;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.4rem;
-    letter-spacing: 3px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    box-shadow: 0 0 20px #1b5e20;
-    transition: all 0.2s;
-  }
+    #touch-controls {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      gap: 24px;
+      z-index: 25;
+    }
 
-  #start-btn:hover {
-    background: linear-gradient(135deg, #388e3c, #66bb6a);
-    box-shadow: 0 0 30px #4caf50;
-    transform: scale(1.04);
-  }
+    .touch-btn {
+      width: 130px;
+      height: 72px;
+      background: rgba(46,125,50,0.45);
+      border: 2px solid #2e7d32;
+      border-radius: 8px;
+      color: #76ff03;
+      font-size: 2.6rem;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      box-shadow: 0 0 12px rgba(76,175,80,0.3);
+    }
 
-  #gameover-title {
-    font-family: 'Oswald', sans-serif;
-    font-size: 3rem;
-    color: #ff5252;
-    text-shadow: 0 0 20px #ff1744;
-    letter-spacing: 4px;
-  }
+    .touch-btn:active { background: rgba(76,175,80,0.6); }
 
-  #touch-controls {
-    display: none;
-    gap: 24px;
-    margin-top: 14px;
-  }
-
-  .touch-btn {
-    width: 130px;
-    height: 72px;
-    background: rgba(46,125,50,0.45);
-    border: 2px solid #2e7d32;
-    border-radius: 8px;
-    color: #76ff03;
-    font-size: 2.6rem;
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: none;
-    box-shadow: 0 0 12px rgba(76,175,80,0.3);
-  }
-
-  .touch-btn:active {
-    background: rgba(76,175,80,0.6);
-  }
-
-  @media (hover: none) and (pointer: coarse) {
-    #touch-controls { display: flex; }
-    canvas { max-width: 100vw; height: auto; }
-  }
-</style>
+    @media (hover: none) and (pointer: coarse) {
+      #touch-controls { display: flex; }
+    }
+  </style>
 </head>
 <body>
 
@@ -158,18 +149,14 @@
   <div class="stat">ミス <span id="miss">0</span> / 5</div>
 </div>
 
-<div id="game-wrapper">
-  <canvas id="c" width="600" height="520"></canvas>
-
-  <div id="overlay">
-    <h1>⚽ ボール蹴り返し</h1>
-    <div class="subtitle">
-      前方から飛んでくるボールを<br>
-      足で蹴り返せ！
-    </div>
-    <div class="key-hint">← → カーソルキー または 画面下ボタンで移動</div>
-    <button id="start-btn" onclick="startGame()">キックオフ！</button>
+<div id="overlay">
+  <h1>⚽ ボール蹴り返し</h1>
+  <div class="subtitle">
+    前方から飛んでくるボールを<br>
+    足で蹴り返せ！
   </div>
+  <div class="key-hint">← → カーソルキー または 画面下ボタンで移動</div>
+  <button id="start-btn" onclick="startGame()">キックオフ！</button>
 </div>
 
 <div id="touch-controls">
@@ -177,21 +164,195 @@
   <button class="touch-btn" id="btn-right">&#9654;</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
+// ── Three.js Setup ──────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x060e06);
+scene.fog = new THREE.FogExp2(0x060e06, 0.017);
 
-// ── State ──────────────────────────────────────────────
-let player, balls, score, miss, level, frameCount, spawnInterval, running;
+const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 200);
+camera.position.set(0, 1.7, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.domElement.style.cssText = 'position:fixed;inset:0;z-index:1;';
+document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ── Lights ──────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x2a4a2a, 1.6));
+
+const sun = new THREE.DirectionalLight(0xfff5e0, 1.1);
+sun.position.set(8, 22, 6);
+sun.castShadow = true;
+sun.shadow.camera.left = -18; sun.shadow.camera.right = 18;
+sun.shadow.camera.top = 70;   sun.shadow.camera.bottom = -8;
+sun.shadow.mapSize.set(1024, 1024);
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0xb0d4ff, 0.35);
+fill.position.set(-6, 9, 7);
+scene.add(fill);
+
+// ── Field ───────────────────────────────────────────────
+// Grass texture (striped)
+const gc = document.createElement('canvas');
+gc.width = gc.height = 512;
+const gx = gc.getContext('2d');
+for (let i = 0; i < 8; i++) {
+  gx.fillStyle = i % 2 === 0 ? '#1e6e1e' : '#237023';
+  gx.fillRect(0, i * 64, 512, 64);
+}
+const grassTex = new THREE.CanvasTexture(gc);
+grassTex.wrapS = grassTex.wrapT = THREE.RepeatWrapping;
+grassTex.repeat.set(3, 10);
+
+const fieldMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(26, 72),
+  new THREE.MeshLambertMaterial({ map: grassTex })
+);
+fieldMesh.rotation.x = -Math.PI / 2;
+fieldMesh.position.set(0, 0, -35);
+fieldMesh.receiveShadow = true;
+scene.add(fieldMesh);
+
+// Field lines
+const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+function addLine(pts) {
+  scene.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(pts.map(([x, z]) => new THREE.Vector3(x, 0.02, z))),
+    lineMat
+  ));
+}
+addLine([[-11, 2],  [11, 2],  [11, -69], [-11, -69], [-11, 2]]); // boundary
+addLine([[-11, -33], [11, -33]]);                                  // center line
+const cc = [];
+for (let i = 0; i <= 64; i++) {
+  const a = (i / 64) * Math.PI * 2;
+  cc.push([Math.cos(a) * 5, -33 + Math.sin(a) * 5]);
+}
+addLine(cc);                                                        // center circle
+addLine([[-7, -58], [7, -58], [7, -69], [-7, -69], [-7, -58]]);   // far penalty area
+addLine([[-7, 2],   [7, 2],   [7, -9],  [-7, -9],  [-7, 2]]);     // near penalty area
+
+// Goal posts (far, z=-70)
+(function buildGoal(z) {
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.1 });
+  const postGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.8, 8);
+  const lp = new THREE.Mesh(postGeo, mat); lp.position.set(-3.8, 1.4, z); scene.add(lp);
+  const rp = new THREE.Mesh(postGeo, mat); rp.position.set( 3.8, 1.4, z); scene.add(rp);
+  const cb = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 7.6, 8), mat);
+  cb.rotation.z = Math.PI / 2; cb.position.set(0, 2.8, z); scene.add(cb);
+  const net = new THREE.Mesh(
+    new THREE.PlaneGeometry(7.6, 2.8, 20, 9),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.18, side: THREE.DoubleSide })
+  );
+  net.position.set(0, 1.4, z - 0.7); scene.add(net);
+})(-70);
+
+// Kick zone ring on ground
+const kickRing = new THREE.Mesh(
+  new THREE.RingGeometry(1.5, 1.72, 32),
+  new THREE.MeshBasicMaterial({ color: 0x76ff03, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+);
+kickRing.rotation.x = -Math.PI / 2;
+kickRing.position.set(0, 0.02, -1);
+scene.add(kickRing);
+
+// ── Ball Texture ────────────────────────────────────────
+const bc = document.createElement('canvas');
+bc.width = bc.height = 256;
+const bx = bc.getContext('2d');
+bx.fillStyle = 'white';
+bx.beginPath(); bx.arc(128, 128, 128, 0, Math.PI * 2); bx.fill();
+bx.fillStyle = '#111';
+const penta = (cx, cy, r) => {
+  bx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    i === 0 ? bx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r)
+            : bx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+  }
+  bx.closePath(); bx.fill();
+};
+const [C, D, R] = [128, 72, 28];
+[[C,C],[C,C-D],[C+D*.95,C-D*.31],[C+D*.59,C+D*.81],[C-D*.59,C+D*.81],[C-D*.95,C-D*.31]]
+  .forEach(([x, y]) => penta(x, y, R));
+const ballTex = new THREE.CanvasTexture(bc);
+
+function makeBallMesh() {
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.3, 20, 20),
+    new THREE.MeshPhongMaterial({ map: ballTex, shininess: 70 })
+  );
+  mesh.castShadow = true;
+  return mesh;
+}
+
+// ── Particle System ─────────────────────────────────────
+const MAX_P = 240;
+const pPos = new Float32Array(MAX_P * 3).fill(9999);
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const pMat = new THREE.PointsMaterial({ color: 0xaaff44, size: 0.18, transparent: true, opacity: 0.9, sizeAttenuation: true });
+scene.add(new THREE.Points(pGeo, pMat));
+let activePs = [];
+
+function burst(x, y, z) {
+  for (let i = 0; i < 20; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const el = (Math.random() - 0.25) * Math.PI;
+    const s = 0.07 + Math.random() * 0.13;
+    activePs.push({
+      x, y, z,
+      vx: Math.cos(el) * Math.cos(a) * s,
+      vy: Math.sin(el) * s + 0.07,
+      vz: Math.cos(el) * Math.sin(a) * s,
+      life: 1
+    });
+  }
+}
+
+function updatePs() {
+  for (let i = activePs.length - 1; i >= 0; i--) {
+    const p = activePs[i];
+    p.x += p.vx; p.y += p.vy; p.z += p.vz;
+    p.vy -= 0.005; p.life -= 0.032;
+    if (p.life <= 0) activePs.splice(i, 1);
+  }
+  for (let i = 0; i < MAX_P; i++) {
+    const live = i < activePs.length;
+    pPos[i*3]   = live ? activePs[i].x : 9999;
+    pPos[i*3+1] = live ? activePs[i].y : 9999;
+    pPos[i*3+2] = live ? activePs[i].z : 9999;
+  }
+  pGeo.attributes.position.needsUpdate = true;
+}
+
+// ── Game State ──────────────────────────────────────────
+let playerX = 0, balls = [], score = 0, miss = 0, level = 1;
+let frameCount = 0, spawnInterval = 90, running = false;
 let keys = {};
+let camBaseX = 0, shakeDecay = 0;
+let animId = null;
 
-// ── Init ───────────────────────────────────────────────
 function initGame() {
-  player = { x: W / 2, y: H - 60, w: 64, h: 36, speed: 6 };
-  balls = [];
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+  balls.forEach(b => scene.remove(b.mesh));
+  balls = []; activePs = [];
+  playerX = 0; camBaseX = 0; shakeDecay = 0;
   score = 0; miss = 0; level = 1; frameCount = 0; spawnInterval = 90;
   running = true;
+  kickRing.position.set(0, 0.02, -1);
   updateHUD();
 }
 
@@ -201,307 +362,122 @@ function startGame() {
   loop();
 }
 
-// ── Ball spawn ─────────────────────────────────────────
+// ── Ball Spawn ──────────────────────────────────────────
 function spawnBall() {
-  const x = 40 + Math.random() * (W - 80);
-  const targetX = player.x + (Math.random() - 0.5) * 120;
-  const speed = 2.2 + level * 0.3 + Math.random() * 1.2;
-  const dist = Math.hypot(targetX - x, H - 80);
-  balls.push({
-    x, y: 20,
-    vx: (targetX - x) / dist * speed,
-    vy: (H - 80 - 20) / dist * speed,
-    r: 13,
-    rot: 0,
-    kicked: false,
-    kickVx: 0, kickVy: 0,
-    kickAlpha: 1,
-    trail: []
-  });
+  const mesh = makeBallMesh();
+  const spawnX = (Math.random() - 0.5) * 18;
+  const targetX = playerX + (Math.random() - 0.5) * 5;
+  const spawnZ = -64;
+  const dz = -1 - spawnZ; // ≈ 63
+  const dx = targetX - spawnX;
+  const speed = 0.15 + level * 0.018 + Math.random() * 0.06;
+  const len = Math.hypot(dx, dz);
+  mesh.position.set(spawnX, 0.3, spawnZ);
+  scene.add(mesh);
+  balls.push({ mesh, vx: (dx/len)*speed, vz: (dz/len)*speed, vy: 0, bounces: 0, kicked: false, kickVy: 0, kickVz: 0, kickAlpha: 1 });
 }
 
-// ── Kick effect particles ──────────────────────────────
-let particles = [];
-function burst(x, y) {
-  for (let i = 0; i < 14; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const s = 2 + Math.random() * 4;
-    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 1, color: `hsl(${80+Math.random()*60},100%,60%)` });
-  }
-}
-
-// ── Main loop ──────────────────────────────────────────
+// ── Main Loop ───────────────────────────────────────────
 function loop() {
   if (!running) return;
-  requestAnimationFrame(loop);
+  animId = requestAnimationFrame(loop);
   frameCount++;
 
   // Input
-  if (keys['ArrowLeft'])  player.x = Math.max(player.w/2 + 4, player.x - player.speed);
-  if (keys['ArrowRight']) player.x = Math.min(W - player.w/2 - 4, player.x + player.speed);
+  const spd = 0.18;
+  if (keys['ArrowLeft'])  playerX = Math.max(-9.5, playerX - spd);
+  if (keys['ArrowRight']) playerX = Math.min( 9.5, playerX + spd);
 
-  // Spawn
+  // Camera: smooth follow + shake
+  camBaseX += (playerX * 0.13 - camBaseX) * 0.07;
+  shakeDecay *= 0.82;
+  camera.position.set(
+    camBaseX + (Math.random() - 0.5) * shakeDecay,
+    1.7  + (Math.random() - 0.5) * shakeDecay,
+    0
+  );
+  camera.lookAt(playerX * 0.06, 0.65, -28);
+
+  // Kick ring: follow player + pulse
+  kickRing.position.x += (playerX - kickRing.position.x) * 0.14;
+  kickRing.material.opacity = 0.18 + Math.abs(Math.sin(frameCount * 0.08)) * 0.14;
+
+  // Spawn / Level up
   if (frameCount % spawnInterval === 0) spawnBall();
   if (frameCount % 400 === 0 && spawnInterval > 38) { spawnInterval -= 6; level++; updateHUD(); }
 
   // Update balls
   for (let i = balls.length - 1; i >= 0; i--) {
     const b = balls[i];
+
     if (b.kicked) {
-      b.x += b.kickVx; b.y += b.kickVy;
-      b.kickVy -= 0.18;
-      b.rot += b.kickVx * 0.08;
-      b.kickAlpha -= 0.022;
-      if (b.kickAlpha <= 0) { balls.splice(i, 1); continue; }
-    } else {
-      b.trail.push({ x: b.x, y: b.y });
-      if (b.trail.length > 8) b.trail.shift();
-      b.x += b.vx; b.y += b.vy;
-      b.rot += b.vx * 0.06;
+      b.mesh.position.x += b.vx;
+      b.mesh.position.y += b.kickVy;
+      b.mesh.position.z += b.kickVz;
+      b.kickVy -= 0.014;
+      b.kickAlpha -= 0.024;
+      b.mesh.material.transparent = true;
+      b.mesh.material.opacity = b.kickAlpha;
+      if (b.kickAlpha <= 0) { scene.remove(b.mesh); balls.splice(i, 1); }
+      continue;
+    }
 
-      // Hit player
-      const px = player.x, py = player.y;
-      const dx = b.x - px, dy = b.y - py;
-      if (Math.abs(dx) < player.w/2 + b.r && Math.abs(dy) < player.h/2 + b.r) {
-        score++;
-        burst(b.x, b.y);
-        b.kicked = true;
-        b.kickVx = dx * 0.18 + (Math.random()-0.5)*3;
-        b.kickVy = -6 - Math.random()*3;
-        updateHUD();
-        continue;
-      }
+    // Physics
+    b.mesh.position.x += b.vx;
+    b.mesh.position.z += b.vz;
+    b.mesh.position.y += b.vy;
+    b.vy -= 0.007;
 
-      // Miss (passed player)
-      if (b.y > H + b.r) {
-        balls.splice(i, 1);
-        miss++;
-        updateHUD();
-        if (miss >= 5) { gameOver(); return; }
-        continue;
-      }
+    // Ground bounce
+    if (b.mesh.position.y < 0.3 && b.vy < 0) {
+      b.vy = Math.abs(b.vy) * 0.55;
+      b.bounces++;
+      if (b.bounces >= 3 || b.vy < 0.02) { b.vy = 0; b.mesh.position.y = 0.3; }
+    }
+
+    // Rolling rotation
+    b.mesh.rotation.x += b.vz * 3.0;
+    b.mesh.rotation.z -= b.vx * 3.0;
+
+    // Kick detection: ball near player's feet
+    const bz = b.mesh.position.z, bxp = b.mesh.position.x;
+    if (bz > -2.8 && bz < 1.2 && Math.abs(bxp - playerX) < 1.8 && b.mesh.position.y < 1.8) {
+      score++;
+      burst(bxp, b.mesh.position.y, bz);
+      b.kicked = true;
+      b.kickVy = 0.22 + Math.random() * 0.08;
+      b.kickVz = -(0.18 + Math.random() * 0.06);
+      b.vx    = (bxp - playerX) * 0.06 + (Math.random() - 0.5) * 0.08;
+      shakeDecay = 0.14;
+      updateHUD();
+      continue;
+    }
+
+    // Miss
+    if (bz > 2.8) {
+      scene.remove(b.mesh);
+      balls.splice(i, 1);
+      miss++;
+      updateHUD();
+      if (miss >= 5) { gameOver(); return; }
     }
   }
 
-  // Particles
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.04;
-    if (p.life <= 0) particles.splice(i, 1);
-  }
-
-  draw();
+  updatePs();
+  renderer.render(scene, camera);
 }
 
-// ── Draw ───────────────────────────────────────────────
-function draw() {
-  // Field background
-  ctx.fillStyle = '#1a4a1a';
-  ctx.fillRect(0, 0, W, H);
-  drawField();
-
-  // Trails
-  balls.forEach(b => {
-    if (!b.kicked) {
-      b.trail.forEach((t, idx) => {
-        const a = (idx / b.trail.length) * 0.35;
-        ctx.beginPath();
-        ctx.arc(t.x, t.y, b.r * (idx/b.trail.length), 0, Math.PI*2);
-        ctx.fillStyle = `rgba(255,255,180,${a})`;
-        ctx.fill();
-      });
-    }
-  });
-
-  // Balls
-  balls.forEach(b => {
-    ctx.save();
-    ctx.globalAlpha = b.kicked ? b.kickAlpha : 1;
-    ctx.translate(b.x, b.y);
-    ctx.rotate(b.rot);
-    drawBall(0, 0, b.r);
-    ctx.restore();
-  });
-
-  // Particles
-  particles.forEach(p => {
-    ctx.save();
-    ctx.globalAlpha = p.life;
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 4 * p.life, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-  });
-
-  // Player (feet / body)
-  drawPlayer();
-}
-
-function drawField() {
-  // Grass stripes
-  for (let i = 0; i < 6; i++) {
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.0)';
-    ctx.fillRect(i * (W/6), 0, W/6, H);
-  }
-  // Penalty area lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-  ctx.lineWidth = 1.5;
-  // top area
-  ctx.strokeRect(W/2 - 110, 0, 220, 80);
-  // bottom area (player zone)
-  ctx.strokeRect(W/2 - 140, H - 100, 280, 100);
-  // Center circle
-  ctx.beginPath();
-  ctx.arc(W/2, H/2, 60, 0, Math.PI*2);
-  ctx.stroke();
-  // Center line
-  ctx.beginPath();
-  ctx.moveTo(0, H/2); ctx.lineTo(W, H/2);
-  ctx.stroke();
-  // Halfway dot
-  ctx.beginPath();
-  ctx.arc(W/2, H/2, 4, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.fill();
-
-  // Goal (top)
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.fillRect(W/2 - 80, 0, 160, 18);
-  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-  ctx.strokeRect(W/2 - 80, 0, 160, 18);
-
-  // Shadow under player zone
-  const grad = ctx.createLinearGradient(0, H-110, 0, H);
-  grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(1, 'rgba(0,0,0,0.35)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, H-110, W, 110);
-}
-
-function drawBall(x, y, r) {
-  // Ball body
-  const g = ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.05, x, y, r);
-  g.addColorStop(0, '#ffffff');
-  g.addColorStop(0.4, '#e8e8e8');
-  g.addColorStop(1, '#aaaaaa');
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI*2);
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Pentagon patches (simplified)
-  ctx.fillStyle = '#222';
-  ctx.strokeStyle = '#222';
-  ctx.lineWidth = 0.8;
-  const patches = [
-    [0, 0],
-    [0, -r*0.62],
-    [r*0.59, -r*0.19],
-    [r*0.36, r*0.5],
-    [-r*0.36, r*0.5],
-    [-r*0.59, -r*0.19],
-  ];
-  patches.forEach(([px, py]) => {
-    ctx.beginPath();
-    for (let i = 0; i < 5; i++) {
-      const a = (i / 5) * Math.PI * 2 - Math.PI/2;
-      const sr = r * 0.28;
-      const nx = px + Math.cos(a)*sr, ny = py + Math.sin(a)*sr;
-      i === 0 ? ctx.moveTo(nx, ny) : ctx.lineTo(nx, ny);
-    }
-    ctx.closePath();
-    ctx.fill();
-  });
-
-  // Shine
-  ctx.beginPath();
-  ctx.arc(x - r*0.32, y - r*0.32, r*0.2, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fill();
-}
-
-function drawPlayer() {
-  const px = player.x, py = player.y;
-
-  // Shadow
-  ctx.beginPath();
-  ctx.ellipse(px, py + 14, 34, 10, 0, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.fill();
-
-  // Body (jersey - red)
-  ctx.fillStyle = '#e53935';
-  ctx.beginPath();
-  ctx.roundRect(px - 14, py - 28, 28, 30, 4);
-  ctx.fill();
-  // Jersey number
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 12px Oswald, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('10', px, py - 12);
-
-  // Head
-  const hg = ctx.createRadialGradient(px - 3, py - 40, 2, px, py - 36, 14);
-  hg.addColorStop(0, '#ffcc80');
-  hg.addColorStop(1, '#ff8a65');
-  ctx.beginPath();
-  ctx.arc(px, py - 36, 13, 0, Math.PI*2);
-  ctx.fillStyle = hg;
-  ctx.fill();
-
-  // Hair
-  ctx.fillStyle = '#4e342e';
-  ctx.beginPath();
-  ctx.ellipse(px, py - 46, 13, 7, 0, Math.PI, 0);
-  ctx.fill();
-
-  // Shorts
-  ctx.fillStyle = '#1a237e';
-  ctx.beginPath();
-  ctx.roundRect(px - 14, py + 2, 13, 14, 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(px + 1, py + 2, 13, 14, 2);
-  ctx.fill();
-
-  // Legs / socks (white)
-  ctx.fillStyle = '#f5f5f5';
-  ctx.fillRect(px - 12, py + 16, 8, 16);
-  ctx.fillRect(px + 4, py + 16, 8, 16);
-
-  // Boots
-  ctx.fillStyle = '#212121';
-  ctx.beginPath();
-  ctx.roundRect(px - 14, py + 28, 12, 8, 3);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.roundRect(px + 2, py + 28, 12, 8, 3);
-  ctx.fill();
-
-  // Kick leg animation hint (oscillate)
-  const kickOffset = Math.sin(frameCount * 0.15) * 4;
-  ctx.fillStyle = '#e53935';
-  ctx.fillRect(px + 4, py + 2, 8, 4);
-  ctx.fillStyle = '#f5f5f5';
-  ctx.fillRect(px + 4 + kickOffset, py + 16, 8, 16);
-  ctx.fillStyle = '#212121';
-  ctx.beginPath();
-  ctx.roundRect(px + 2 + kickOffset, py + 28, 12, 8, 3);
-  ctx.fill();
-}
-
+// ── HUD & Game Over ─────────────────────────────────────
 function updateHUD() {
   document.getElementById('score').textContent = score;
   document.getElementById('level').textContent = level;
-  document.getElementById('miss').textContent = miss;
+  document.getElementById('miss').textContent  = miss;
 }
 
 function gameOver() {
   running = false;
+  balls.forEach(b => scene.remove(b.mesh));
+  balls = [];
   const ov = document.getElementById('overlay');
   ov.innerHTML = `
     <div id="gameover-title">💥 ゲームオーバー</div>
@@ -512,22 +488,25 @@ function gameOver() {
   ov.style.display = 'flex';
 }
 
-// ── Keys ───────────────────────────────────────────────
+// ── Input ───────────────────────────────────────────────
 window.addEventListener('keydown', e => {
   keys[e.key] = true;
-  if (['ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+  if (['ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.key] = false; });
 
-// ── Touch controls ──────────────────────────────────────
-function bindTouchBtn(id, key) {
+function bindTouch(id, key) {
   const btn = document.getElementById(id);
   btn.addEventListener('touchstart',  e => { e.preventDefault(); keys[key] = true;  }, { passive: false });
   btn.addEventListener('touchend',    e => { e.preventDefault(); keys[key] = false; }, { passive: false });
-  btn.addEventListener('touchcancel', e => { keys[key] = false; }, { passive: false });
+  btn.addEventListener('touchcancel', () => { keys[key] = false; });
 }
-bindTouchBtn('btn-left',  'ArrowLeft');
-bindTouchBtn('btn-right', 'ArrowRight');
+bindTouch('btn-left',  'ArrowLeft');
+bindTouch('btn-right', 'ArrowRight');
+
+// Initial render (show 3D field behind title screen)
+camera.lookAt(0, 0.65, -28);
+renderer.render(scene, camera);
 </script>
 </body>
 </html>
